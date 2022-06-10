@@ -53,15 +53,16 @@ var port = process.env.PORT || "80"; //local=3000 remote=80
 //#endregion
 const user = require("./routes/user");
 const recipes = require("./routes/recipes");
+const recipeuser = require("./routes/recipeuser");
 const auth = require("./routes/auth");
 
 
 //#region cookie middleware
 app.use(function (req, res, next) {
   if (req.session && req.session.user_id) {
-    DButils.execQuery("SELECT user_id FROM users")
+    DButils.execQuery("SELECT username FROM users")
       .then((users) => {
-        if (users.find((x) => x.user_id === req.session.user_id)) {
+        if (users.find((x) => x.username === req.session.user_id)) {
           req.user_id = req.session.user_id;
         }
         next();
@@ -77,17 +78,17 @@ app.use(function (req, res, next) {
 app.get("/alive", (req, res) => res.send("I'm alive"));
 
 // Routings
-app.use("/users", user);
 app.use("/recipes", recipes);
+app.use("/users", recipeuser);
+
 app.use(auth);
+
 
 // Default router
 app.use(function (err, req, res, next) {
   console.error(err);
   res.status(err.status || 500).send({ message: err.message, success: false });
 });
-
-
 
 const server = app.listen(port, () => {
   console.log(`Server listen on port ${port}`);
