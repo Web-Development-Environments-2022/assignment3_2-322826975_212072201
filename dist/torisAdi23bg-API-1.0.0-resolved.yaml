@@ -1,0 +1,761 @@
+---
+openapi: 3.0.0
+info:
+  title: Simple Inventory API
+  description: This is a simple API
+  contact:
+    email: you@your-company.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/torisAdi23bg/API/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: http://127.0.0.1:3000
+  description: SwaggerHub API Auto Mocking
+tags:
+- name: auth
+  description: User management
+- name: recipes
+  description: Recipes management
+- name: users
+  description: Recipes related to user
+paths:
+  /recipes/get_recipe/{recipeID}:
+    get:
+      tags:
+      - recipes
+      summary: get_recipe_object
+      description: |
+        By passing the recipe id by URL param, the server will provide a recipe object from DB.
+      parameters:
+      - name: recipeID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recipe'
+        "204":
+          description: could not find recipe id
+  /recipes/full_recipe/{recipeID}:
+    get:
+      tags:
+      - recipes
+      summary: get_full_recipe_object
+      description: |
+        By passing the recipe id by URL param, the server will provide a full recipe object from DB.
+      parameters:
+      - name: recipeID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/full_recipe'
+        "204":
+          description: could not find recipe id
+  /recipes/get_3_random:
+    get:
+      tags:
+      - recipes
+      summary: get_3_random_recipes
+      description: |
+        By calling this function, server will return an array of 3 recipe objects
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipe'
+  /users/get_3_last:
+    get:
+      tags:
+      - users
+      summary: get_3_last_recipes_user_watched
+      description: |
+        By calling this function, server will return an array of 3 recipe objects (if available 3 in db, if less - will return error). The recipes will be the last recipes that the logged-in user watched.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipe'
+        "203":
+          description: server could not find requested resources / not enough recipes in db
+        "403":
+          description: user not logged in
+        "401":
+          description: Unauthorized
+  /users/search_recipe:
+    get:
+      tags:
+      - users
+      summary: get_3_last_recipes_user_watched
+      description: |
+        By calling this function, server will return an array of 3 recipe objects (if available 3 in db, if less - will return error). The recipes will be the last recipes that the logged-in user watched.
+      parameters:
+      - name: search_string
+        in: query
+        description: search words
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: number
+        in: query
+        description: search words
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          description: 5/10/15
+          default: "5"
+      - name: cuisuines
+        in: query
+        description: search words
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "false"
+      - name: diets
+        in: query
+        description: search words
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "false"
+      - name: intolerances
+        in: query
+        description: search words
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "false"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/search_recipe'
+        "204":
+          description: server could not find requested resources
+        "400":
+          description: params given not correct
+        "403":
+          description: user not logged in
+        "401":
+          description: Unauthorized
+  /users/create_recipe:
+    post:
+      tags:
+      - users
+      summary: user_create_recipe
+      description: |
+        By sending the form, the user will create his own recipe, that will be added to DB.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                oneOf:
+                - $ref: '#/components/schemas/full_recipe'
+        required: true
+      responses:
+        "201":
+          description: creation succeeded
+        "400":
+          description: one or more values are not according its pattern / missing
+        "403":
+          description: no logged in user
+        "401":
+          description: Unauthorized
+  /users/mark-as-prefered/{recipeID}:
+    put:
+      tags:
+      - users
+      summary: set_recipe_prefere
+      description: |
+        By passing the recipe id by URL param, there will be adding of user-recipe preferation.
+      parameters:
+      - name: recipeID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "201":
+          description: OK
+        "200":
+          description: already marked as prefered
+        "404":
+          description: could not find recipe id
+        "403":
+          description: no logged-in user
+        "401":
+          description: Unauthorized
+  /users/favorites:
+    get:
+      tags:
+      - users
+      summary: get_recipes_prefered
+      description: |
+        server will return user all prefered recipes of the current user.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipe'
+        "204":
+          description: server could not find requested resources / not enough recipes in db
+        "403":
+          description: user not logged in
+        "401":
+          description: Unauthorized
+  /users/get_my_created:
+    get:
+      tags:
+      - users
+      summary: get_recipes_created
+      description: |
+        server will return user all created of user recipes.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/recipe'
+        "204":
+          description: server could not find requested resources / not enough recipes in db
+        "403":
+          description: user not logged in
+        "401":
+          description: Unauthorized
+  /users/get_created_recipe/{recipeID}:
+    get:
+      tags:
+      - users
+      summary: get_created_recipe
+      description: |
+        By passing the recipeID by URL param, server will return user the object of the wanted recipe.
+      parameters:
+      - name: recipeID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/full_recipe'
+        "404":
+          description: server could not find requested resources / not enough recipes in db
+        "403":
+          description: user not logged in
+        "401":
+          description: Unauthorized
+  /users/create_family_recipe:
+    post:
+      tags:
+      - users
+      summary: user_create_family_recipe
+      description: |
+        By sending the form, the user will create his own family-recipe, that will be added to DB.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                oneOf:
+                - $ref: '#/components/schemas/family_full_recipe'
+        required: true
+      responses:
+        "201":
+          description: creation succeeded
+        "400":
+          description: one or more values are not according its pattern / missing
+        "403":
+          description: no logged in user
+        "401":
+          description: Unauthorized
+  /users/mark-as-watched/{recipeID}:
+    put:
+      tags:
+      - users
+      summary: set_recipe_watched
+      description: |
+        By passing the recipe id by URL param, there will be adding of user-recipe watching.
+      parameters:
+      - name: recipeID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: could not find recipe id
+        "403":
+          description: no logged-in user
+        "401":
+          description: Unauthorized
+  /users/get_family:
+    get:
+      tags:
+      - users
+      summary: get_family
+      description: |
+        server will return user all family recipes of user.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/family_recipe'
+        "204":
+          description: server could not find requested resources / not enough recipes in db
+        "403":
+          description: user not logged in
+        "401":
+          description: Unauthorized
+  /users/get_family_recipe/{recipeID}:
+    get:
+      tags:
+      - users
+      summary: get_family_recipe
+      description: |
+        By passing the recipeID by URL param, server will return user the object of the wanted recipe.
+      parameters:
+      - name: recipeID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/family_full_recipe'
+        "404":
+          description: server could not find requested resources / not enough recipes in db
+        "403":
+          description: user not logged in
+        "401":
+          description: Unauthorized
+  /users/get_last_search_title:
+    get:
+      tags:
+      - users
+      summary: get_last_search_title
+      description: |
+        By calling this function, server will return an array of the last search done by the user.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/search_title'
+        "204":
+          description: No search done
+        "403":
+          description: user not logged in
+        "401":
+          description: Unauthorized
+  /users/get_last_search_results:
+    get:
+      tags:
+      - users
+      summary: get_last_search_results
+      description: |
+        By calling this function, server will return an array of the last search done by the user.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/search_recipe'
+        "204":
+          description: No search done
+        "403":
+          description: user not logged in
+        "401":
+          description: Unauthorized
+  /Register:
+    post:
+      tags:
+      - auth
+      summary: register
+      description: |
+        By sending the form, the user will be registered in the DB.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user'
+        required: true
+      responses:
+        "201":
+          description: user created
+        "400":
+          description: one or more values are not according its pattern / missing
+        "409":
+          description: Username taken
+  /Login:
+    post:
+      tags:
+      - auth
+      summary: log-in
+      description: By sending the form, the user will be logged-in.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/log-in-user'
+        required: true
+      responses:
+        "200":
+          description: loggin succeeded
+        "400":
+          description: one or more values are not according its pattern / missing
+        "401":
+          description: Username or Password incorrect
+  /Logout:
+    post:
+      tags:
+      - auth
+      summary: log-out
+      description: By sending the form, the user will be logged-out.
+      responses:
+        "200":
+          description: logout succeeded
+components:
+  schemas:
+    recipe:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Chocolate Cake
+        image:
+          type: string
+          example: /images/c.png
+        time_to_cook:
+          type: integer
+          example: 20
+        popularity:
+          type: integer
+          example: 20
+        vegan:
+          type: boolean
+          example: true
+        vegetarian:
+          type: boolean
+          example: true
+        gluten_free_sign:
+          type: boolean
+          example: true
+        isPrefered:
+          type: boolean
+          example: false
+        isWatched:
+          type: boolean
+          example: false
+    full_recipe:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Chocolate Cake
+        instructions:
+          type: string
+          example: My_Description
+        image:
+          type: string
+          example: /images/c.png
+        time_to_cook:
+          type: integer
+        popularity:
+          type: integer
+          example: 20
+        vegan:
+          type: boolean
+          example: true
+        vegetarian:
+          type: boolean
+          example: true
+        gluten_free_sign:
+          type: boolean
+          example: true
+        ingredients_list:
+          type: array
+          example:
+          - Milk: 3 cups
+          - Sugar: 1 spoon
+          items:
+            $ref: '#/components/schemas/full_recipe_ingredients_list'
+        pieces_amount:
+          type: string
+          example: 2 pieces
+        isPrefered:
+          type: boolean
+          example: false
+        isWatched:
+          type: boolean
+          example: false
+    user:
+      required:
+      - country
+      - email
+      - first_name
+      - last_name
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          maxLength: 8
+          minLength: 3
+          pattern: '[a-zA-Z]'
+          type: string
+          description: letters only
+          example: adiusername
+        password:
+          type: string
+          example: adipassword
+        email:
+          maxLength: 10
+          minLength: 5
+          type: string
+          format: email
+          example: adi@email.com
+        first_name:
+          type: string
+          example: adi
+        last_name:
+          type: string
+          example: perry
+        country:
+          type: string
+          example: Israel
+    log-in-user:
+      required:
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          type: string
+          example: adiusername
+        password:
+          type: string
+          example: adipassword
+    family_recipe:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Chocolate Cake
+        image:
+          type: string
+          example: /images/c.png
+        time_to_cook:
+          type: integer
+          example: 20
+        popularity:
+          type: integer
+          example: 20
+        vegan:
+          type: boolean
+          example: true
+        vegetarian:
+          type: boolean
+          example: true
+        gluten_free_sign:
+          type: boolean
+          example: true
+        maker:
+          type: string
+          example: Grandma
+        when_making:
+          type: string
+          example: Every Passover
+    family_full_recipe:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Chocolate Cake
+        instructions:
+          type: string
+          example: My_Description
+        image:
+          type: string
+          example: /images/c.png
+        time_to_cook:
+          type: integer
+        popularity:
+          type: integer
+          example: 20
+        vegan:
+          type: boolean
+          example: true
+        vegetarian:
+          type: boolean
+          example: true
+        gluten_free_sign:
+          type: boolean
+          example: true
+        ingredients_list:
+          type: array
+          example:
+          - Milk: 3 cups
+          - Sugar: 1 spoon
+          items:
+            $ref: '#/components/schemas/full_recipe_ingredients_list'
+        pieces_amount:
+          type: string
+          example: 2 pieces
+        maker:
+          type: string
+          example: Grandma
+        when_making:
+          type: string
+          example: Every Passover
+    search_recipe:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Chocolate Cake
+        image:
+          type: string
+          example: /images/c.png
+        instructions:
+          type: string
+          example: My_Description
+        time_to_cook:
+          type: integer
+          example: 20
+        popularity:
+          type: integer
+          example: 20
+        vegan:
+          type: boolean
+          example: true
+        vegetarian:
+          type: boolean
+          example: true
+        gluten_free_sign:
+          type: boolean
+          example: true
+        isPrefered:
+          type: boolean
+          example: false
+        isWatched:
+          type: boolean
+          example: false
+    search_title:
+      type: object
+      properties:
+        search_string:
+          type: string
+          example: Chocolate Cake
+        number:
+          type: integer
+          example: 5
+        cuisine:
+          type: string
+          example: Italian
+        diet:
+          type: string
+          example: Vegan
+        intolerances:
+          type: string
+          example: Dairy
+    full_recipe_ingredients_list:
+      type: object
+      properties:
+        ingredient_description:
+          type: string
+          example: Milk, Sugar, Oven
+        amount:
+          type: string
+          example: "3"
+      example: null
