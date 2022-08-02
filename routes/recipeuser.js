@@ -149,10 +149,10 @@ router.get("/get_my_created", async (req, res, next) => {
         if (!users.find((x) => x.username === user_id))
             throw { status: 403, message: "user not logged in" };
     
-        const recipes = await DButils.execQuery("SELECT id_recipe as id,title,img,time_to_cook,popularity,vegetarian,vegan,gluten_free_sign FROM recipes where username='" + user_id+"'");
-        if (recipes.length == 0)
-            res.status(204).send({recipes,message:"server could not find requested resources / not enough recipes in db"});
-        res.status(200).send({recipes,message:"OK"});
+        const recipes_objects = await DButils.execQuery("SELECT id_recipe as id,title,img as image,time_to_cook,popularity,vegetarian,vegan,gluten_free_sign FROM recipes where username='" + user_id+"'");
+        if (recipes_objects.length == 0)
+            res.status(204).send({recipes_objects,message:"server could not find requested resources / not enough recipes in db"});
+        res.status(200).send({recipes_objects,message:"OK"});
     
     } catch (error) {
         next(error);
@@ -166,10 +166,10 @@ router.get("/get_created_recipe/:recipeID", async (req, res, next) => {
         if (!users.find((x) => x.username === user_id))
             throw { status: 403, message: "user not logged in" };
 
-        const recipes = await DButils.execQuery("SELECT id_recipe as id,title,img,instructions,time_to_cook,popularity,vegetarian,vegan,gluten_free_sign,ingredients_list,pieces_amount FROM recipes where username='" + user_id+"' and id_recipe='"+req.params.recipeID+"'");
-        if (recipes.length == 0)
+        const recipes_objects = await DButils.execQuery("SELECT id_recipe as id,title,img as image,instructions,time_to_cook,popularity,vegetarian,vegan,gluten_free_sign,ingredients_list,pieces_amount FROM recipes where username='" + user_id+"' and id_recipe='"+req.params.recipeID+"'");
+        if (recipes_objects.length == 0)
             throw { status: 404, message: "server could not find requested resources / not enough recipes in db" };
-        res.status(200).send({recipes,message:"OK"});
+        res.status(200).send({recipes_objects,message:"OK"});
     
     } catch (error) {
         next(error);
@@ -204,10 +204,10 @@ router.get("/get_family", async (req, res, next) => {
         if (!users.find((x) => x.username === user_id))
             throw { status: 403, message: "user not logged in" };
     
-        const recipes = await DButils.execQuery("SELECT id_recipe as id,title,img,time_to_cook,popularity,vegetarian,vegan,gluten_free_sign,maker,when_making FROM family_recipes where username='" + user_id+"'");
-        if (recipes.length == 0)
-            res.status(204).send({recipes,message:"server could not find requested resources / not enough recipes in db"});
-        res.status(200).send({recipes,message:"OK"});
+        const recipes_objects = await DButils.execQuery("SELECT id_recipe as id,title,img as image,time_to_cook,popularity,vegetarian,vegan,gluten_free_sign,maker,when_making,family_img FROM family_recipes where username='" + user_id+"'");
+        if (recipes_objects.length == 0)
+            res.status(204).send({recipes_objects,message:"server could not find requested resources / not enough recipes in db"});
+        res.status(200).send({recipes_objects,message:"OK"});
     
     } catch (error) {
         next(error);
@@ -221,107 +221,19 @@ router.get("/get_family_recipe/:recipeID", async (req, res, next) => {
         if (!users.find((x) => x.username === user_id))
             throw { status: 403, message: "user not logged in" };
 
-        var recipes = await DButils.execQuery("SELECT id_recipe as id,title,img,instructions,time_to_cook,popularity,vegetarian,vegan,gluten_free_sign,ingredients_list,pieces_amount,maker,when_making FROM family_recipes where username='" + user_id+"' and id_recipe='"+req.params.recipeID+"'");
-        if (recipes.length == 0)
+        var recipes_objects = await DButils.execQuery("SELECT id_recipe as id,title,img as image,instructions,time_to_cook,popularity,vegetarian,vegan,gluten_free_sign,ingredients_list,pieces_amount,maker,when_making,family_img FROM family_recipes where username='" + user_id+"' and id_recipe='"+req.params.recipeID+"'");
+        if (recipes_objects.length == 0)
         {
             throw { status: 404, message: "server could not find requested resources / not enough recipes in db" };
         }
         
-        var recipe=recipes[0];
-        res.status(200).send({recipe,message:"OK"});
-    
-    } catch (error) {
-        next(error);
-    }
-});
-
-
-router.get("/search_recipe", async (req, res, next) => {
-    try {
-        const user_id=req.session.user_id;
-        const users = await DButils.execQuery("SELECT username FROM users");
-        if (!users.find((x) => x.username === user_id))
-            throw { status: 403, message: "user not logged in" };
-
-        if (!req.query.search_string)
-            throw { status: 400, message: "params given not correct" };
-        let num=5;
-        if (req.query.number)
-        {
-            if(req.query.number==5 || req.query.number==10 || req.query.number==15)
-                num=req.query.number;
-        }
-        const recipes = await recipeuser_utils.search_recipes(req.query.search_string,
-            num,
-            req.query.cuisine,
-            req.query.diet,
-            req.query.intolerances);
-        let recipes_objects =[];
-        if (recipes.length==0)
-        {
-            res.status(204).send(message="server could not find requested resources");
-        }
-        else{
-        recipes_objects = await recipeuser_utils.searchWatchedPrefered(recipes,user_id);
-        req.session.lastSearchResults = recipes_objects;
-        req.session.lastSearchTitle= {
-            search_string:req.query.search_string,
-            number:req.query.number,
-            cuisine:req.query.cuisine,
-            diet:req.query.diet,
-            intolerances:req.query.intolerances
-        };
+        // var recipe=recipes[0];
         res.status(200).send({recipes_objects,message:"OK"});
-        }
+    
     } catch (error) {
         next(error);
     }
-});  
-
-router.get("/get_last_search_title", async (req, res, next) => {
-    try{
-        const user_id=req.session.user_id;
-        const users = await DButils.execQuery("SELECT username FROM users");
-        if (!users.find((x) => x.username === user_id))
-            throw { status: 403, message: "user not logged in" };
-        
-        if (req.session.lastSearchTitle){
-            let title=req.session.lastSearchTitle;
-            res.status(200).send({title,message:"OK"});    
-        }
-        else{
-            res.status(204).send({message:"No search done"});    
-
-        }
- 
-    }
-    catch (error) {
-        next(error);
-    }
-
-    
 });
 
-router.get("/get_last_search_results", async (req, res, next) => {
-    try{
-        const user_id=req.session.user_id;
-        const users = await DButils.execQuery("SELECT username FROM users");
-        if (!users.find((x) => x.username === user_id))
-            throw { status: 403, message: "user not logged in" };
-
-        if (req.session.lastSearchResults){
-            let results=req.session.lastSearchResults;
-            res.status(200).send({results,message:"OK"});
-            }
-        else{
-            res.status(204).send({message:"No search done"});    
-
-        }
-    
-    }
-    catch (error) {
-        next(error);
-    }
-});
 
 module.exports = router;
