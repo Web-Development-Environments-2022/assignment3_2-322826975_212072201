@@ -82,8 +82,8 @@ async function addRecipePrivate(user_id ,title, instructions, image, time_to_coo
 
     await DButils.execQuery(
         `INSERT INTO recipes VALUES ('${user_id}', '${id}','${title}','${instructions}'
-        ,'${image}','${time_to_cook}','${popularity}','${vegetarian}','${vegan}','${gluten_free_sign}'
-        ,'${ingredients_list}','${pieces_amount}');`
+        ,'${time_to_cook}','${popularity}','${vegetarian}','${vegan}','${gluten_free_sign}'
+        ,'${ingredients_list}','${pieces_amount}','${image}');`
     );
     
 }
@@ -108,80 +108,6 @@ async function addRecipeFamily(user_id ,title, instructions, image, time_to_cook
     
 }
 
-async function search_recipes(str_to_search,num,cusine,diet,intolerances) {
-    try{
-        let str=""
-        if (cusine)
-        {
-            str+="&cuisine="
-            str+=cusine
-        }
-        if (diet)
-        {
-            str+="&diet="
-            str+=diet
-        }
-        if (intolerances)
-        {
-            str+="&intolerances="
-            str+=intolerances
-        }
-        let recipes = await axios.get(`${api_domain}/complexSearch?query=${str_to_search}&number=${num}${str}`, {
-            params: {
-                includeNutrition: false,
-                apiKey: process.env.spooncular_apiKey
-            }
-        });
-        let recipes_obj=[];
-        
-        for (let j=0; j<recipes.data.results.length;j++)
-        {
-            let recipe_info = await recipes_utils.getRecipeInformation(recipes.data.results[j]["id"]);
-            let { id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree, instructions } = recipe_info.data;
-            
-            recipes_obj.push(
-             {
-                id: id,
-                title: title,
-                time_to_cook: readyInMinutes,
-                image: image,
-                popularity: aggregateLikes,
-                vegan: vegan,
-                vegetarian: vegetarian,
-                gluten_free_sign: glutenFree,
-                instructions: instructions
-            }  
-            );      
-        }
-        return recipes_obj;
-    }
-    catch(error){
-        console.log(error);
-        return;
-    }
-}
-
-async function searchWatchedPrefered(recipes,user_id){
-
-    let recipes_objects =[];
-
-    for(let i=0; i<recipes.length; i++)
-    {
-        let Prefered = await DButils.execQuery("SELECT * FROM prefered where username='" + user_id+"' and id_recipe='"+recipes[i]["id"]+"'");
-        let Watched = await DButils.execQuery("SELECT * FROM watched where username='" + user_id+"' and id_recipe='"+recipes[i]["id"]+"'");
-        recipes[i]["isPrefered"] = false ;
-        recipes[i]["isWatched"] = false ;
-        if (Prefered.length != 0)
-            recipes[i]["isPrefered"] = true ;
-        if (Watched.length != 0)
-            recipes[i]["isWatched"] = true ;
-        recipes_objects.push(recipes[i]);
-        }
-
-    
-    return recipes_objects;
-
-}
 
 exports.pushWatchedPrefered = pushWatchedPrefered;
 exports.markasprefered=markasprefered;
@@ -190,7 +116,5 @@ exports.updateWatched=updateWatched;
 exports.addWatched=addWatched;
 exports.addRecipePrivate=addRecipePrivate;
 exports.addRecipeFamily=addRecipeFamily;
-exports.search_recipes=search_recipes;
-exports.searchWatchedPrefered=searchWatchedPrefered
 
 
